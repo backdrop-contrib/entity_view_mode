@@ -1,6 +1,17 @@
 <?php
 
 /**
+ * Implements hook_permission().
+ */
+function entity_view_mode_permission() {
+  return array(
+    'administer entity view modes' => array(
+      'title' => t('Add, edit and delete custom entity view modes.'),
+    ),
+  );
+}
+
+/**
  * Implements hook_entity_info_alter().
  */
 function entity_view_mode_entity_info_alter(&$info) {
@@ -18,28 +29,28 @@ function entity_view_mode_menu() {
   $items['admin/config/system/entity-view-modes'] = array(
     'title' => 'Entity view modes',
     'page callback' => 'entity_view_mode_list',
-    'access arguments' => array('administer custom view modes'),
+    'access arguments' => array('administer entity view modes'),
     'file' => 'entity_view_mode.admin.inc',
   );
   $items['admin/config/system/entity-view-modes/add/%'] = array(
     'title' => 'Add view mode',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('entity_view_mode_edit_form', 5),
-    'access arguments' => array('administer custom view modes'),
+    'access arguments' => array('administer entity view modes'),
     'file' => 'entity_view_mode.admin.inc',
   );
   $items['admin/config/system/entity-view-modes/edit/%/%'] = array(
     'title' => 'Edit view mode',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('entity_view_mode_edit_form', 5, 6),
-    'access arguments' => array('administer custom view modes'),
+    'access arguments' => array('administer entity view modes'),
     'file' => 'entity_view_mode.admin.inc',
   );
   $items['admin/config/system/entity-view-modes/delete/%/%'] = array(
     'title' => 'Edit view mode',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('entity_view_mode_delete_form', 5, 6),
-    'access arguments' => array('administer custom view modes'),
+    'access arguments' => array('administer entity view modes'),
     'file' => 'entity_view_mode.admin.inc',
   );
 
