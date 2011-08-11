@@ -31,6 +31,9 @@ function entity_view_mode_list() {
       '#collapsible' => TRUE,
     );
 
+    // Sort view modes by machine name.
+    ksort($entity_info[$entity_type]['view modes']);
+
     $rows = array();
     foreach ($entity_info[$entity_type]['view modes'] as $view_mode => $view_mode_info) {
       $rows[$view_mode]['label'] = check_plain($view_mode_info['label']);
