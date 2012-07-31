@@ -99,7 +99,7 @@ function entity_view_mode_save($entity_type, $view_mode) {
   // Save the view mode.
   $view_modes = variable_get('entity_view_modes', array());
   unset($view_modes[$entity_type][$existing_view_mode]);
-  $view_modes[$entity_type][$view_mode['machine_name']] = array_intersect_key($view_mode, drupal_map_assoc(array('label'))) + array('custom settings' => FALSE);
+  $view_modes[$entity_type][$view_mode['machine_name']] = array_intersect_key($view_mode, drupal_map_assoc(array('label'))) + array('custom settings' => TRUE);
   variable_set('entity_view_modes', $view_modes);
 
   // Allow modules to respond after the view mode is saved.
@@ -114,8 +114,9 @@ function entity_view_mode_save($entity_type, $view_mode) {
   unset($view_mode['original']);
   unset($view_mode['is_new']);
 
-  // Clear the static entity info cache.
+  // Clear the static entity info cache and rebuild the menu.
   entity_info_cache_clear();
+  variable_set('menu_rebuild_needed', TRUE);
 }
 
 function entity_view_mode_delete($entity_type, $machine_name) {
@@ -126,8 +127,9 @@ function entity_view_mode_delete($entity_type, $machine_name) {
     unset($view_modes[$entity_type][$machine_name]);
     variable_set('entity_view_modes', $view_modes);
 
-    // Clear the static entity info cache.
+    // Clear the static entity info cache and rebuild the menu.
     entity_info_cache_clear();
+    variable_set('menu_rebuild_needed', TRUE);
   }
 }
 
