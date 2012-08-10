@@ -131,6 +131,7 @@ function entity_view_mode_edit_form($form, &$form_state, $entity_type, $machine_
   $form['custom_settings'] = array(
     '#type' => 'checkbox',
     '#title' => t('Use custom display settings'),
+    '#description' => t('Unchecking this will delete all the display settings for this view mode.'),
     '#default_value' => isset($entity_info['view modes'][$machine_name]['custom settings']) ? $entity_info['view modes'][$machine_name]['custom settings'] : TRUE,
   );
 
@@ -139,7 +140,8 @@ function entity_view_mode_edit_form($form, &$form_state, $entity_type, $machine_
 
   $form['enabled_bundles'] = array(
     '#type' => 'checkboxes',
-    '#title' => t('Enable this view mode for the following types:'),
+    '#title' => t('Enable this view mode for the following types'),
+    '#description' => t('Unchecking a type that has already been configured will delete the display settings for this view mode.'),
     '#options' => $bundle_options,
     '#default_value' => $bundle_values,
     '#states' => array(
