@@ -37,6 +37,8 @@ function entity_view_mode_list() {
     $rows = array();
     foreach ($entity_info[$entity_type]['view modes'] as $view_mode => $view_mode_info) {
       $rows[$view_mode]['label'] = check_plain($view_mode_info['label']);
+      $rows[$view_mode]['type'] = !empty($custom_view_modes[$entity_type][$view_mode]) ? t('In database') : t('In code');
+      $rows[$view_mode]['custom_settings'] = !empty($view_mode_info['custom settings']) ? t('Yes') : t('No');
 
       $operations = array();
       if (isset($custom_view_modes[$entity_type][$view_mode])) {
@@ -65,12 +67,17 @@ function entity_view_mode_list() {
 
     $rows['_add_new'][] = array(
       'data' => l(t('Add new view mode'), "admin/config/system/entity-view-modes/add/{$entity_type}"),
-      'colspan' => 2,
+      'colspan' => 4,
     );
 
     $build[$entity_type]['view_modes'] = array(
       '#theme' => 'table',
-      '#header' => array(t('View mode'), t('Operations')),
+      '#header' => array(
+        t('View mode'),
+        t('Type'),
+        t('Custom settings'),
+        t('Operations'),
+      ),
       '#rows' => $rows,
     );
   }
@@ -120,6 +127,27 @@ function entity_view_mode_edit_form($form, &$form_state, $entity_type, $machine_
       '#value' => $machine_name,
     );
   }
+
+  $form['custom_settings'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Use custom display settings'),
+    '#default_value' => isset($entity_info['view modes'][$machine_name]['custom settings']) ? $entity_info['view modes'][$machine_name]['custom settings'] : TRUE,
+  );
+
+  $bundle_options = entity_view_mode_get_possible_bundles($entity_type);
+  $bundle_values = isset($machine_name) ? entity_view_mode_get_enabled_bundles($entity_type, $machine_name) : array_keys($bundle_options);
+
+  $form['enabled_bundles'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Enable this view mode for the following types:'),
+    '#options' => $bundle_options,
+    '#default_value' => $bundle_values,
+    '#states' => array(
+      'visible' => array(
+        ':input[name="custom_settings"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
 
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['save'] = array(
