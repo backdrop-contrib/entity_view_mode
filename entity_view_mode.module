@@ -75,7 +75,13 @@ function entity_view_mode_menu() {
  */
 function entity_view_mode_load($entity_type, $machine_name) {
   $view_modes = variable_get('entity_view_modes', array());
-  return !empty($view_modes[$entity_type][$machine_name]) ? $view_modes[$entity_type][$machine_name] : FALSE;
+
+  if (!empty($view_modes[$entity_type][$machine_name])) {
+    // Ensure that the machine name is always available.
+    return $view_modes[$entity_type][$machine_name] + array('machine_name' => $machine_name);
+  }
+
+  return FALSE;
 }
 
 /**
@@ -87,7 +93,7 @@ function entity_view_mode_save($entity_type, $view_mode) {
 
   // Load the original, unchanged view mode, if it exists.
   if ($original = entity_view_mode_load($entity_type, $existing_view_mode)) {
-    $view_mode['original'] = $original + array('machine_name' => $existing_view_mode);
+    $view_mode['original'] = $original;
     unset($view_mode['old_machine_name']);
   }
 
