@@ -257,7 +257,7 @@ function entity_view_mode_preprocess(&$variables, $hook) {
 
     // Add view mode suggestions based on the location of the base suggestions.
     if (!in_array("{$entity_type}__{$bundle}__{$view_mode}", $suggestions)) {
-      $index = array_search("{$entity_type}__{$bundle}__{$view_mode}", $suggestions);
+      $index = array_search("{$entity_type}__{$bundle}", $suggestions);
       array_splice($suggestions, $index + 1, 0, "{$entity_type}__{$bundle}__{$view_mode}");
     }
     if (!in_array("{$entity_type}__{$id}__{$view_mode}", $suggestions)) {
