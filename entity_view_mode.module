@@ -1,6 +1,22 @@
 <?php
 
 /**
+ * Implements hook_hook_info().
+ */
+function entity_view_mode_hook_info() {
+  $hooks = array(
+    'entity_view_mode_info',
+    'entity_view_mode_info_alter',
+    'entity_view_mode_presave',
+    'entity_view_mode_insert',
+    'entity_view_mode_update',
+    'entity_view_mode_delete',
+  );
+
+  return array_fill_keys($hooks, array('group' => 'entity'));
+}
+
+/**
  * Implements hook_permission().
  */
 function entity_view_mode_permission() {
@@ -15,9 +31,42 @@ function entity_view_mode_permission() {
  * Implements hook_entity_info_alter().
  */
 function entity_view_mode_entity_info_alter(&$info) {
-  foreach (variable_get('entity_view_modes', array()) as $entity_type => $view_modes) {
-    if (isset($info[$entity_type]['view modes'])) {
-      $info[$entity_type]['view modes'] += $view_modes;
+  static $invoking_hooks = FALSE;
+
+  // Protect against recursion just in case any implementations of
+  // hook_entity_view_mode_info() and hook_entity_view_mode_info_alter() from
+  // calling entity_get_info().
+  if ($invoking_hooks) {
+    return;
+  }
+
+  // First get all the hook-provided view modes.
+  $invoking_hooks = TRUE;
+  $view_mode_info = module_invoke_all('entity_view_mode_info');
+  drupal_alter('entity_view_mode_info', $view_mode_info);
+  $invoking_hooks = FALSE;
+
+  // Add in the variable entity view modes which override hook-provided.
+  $view_mode_info = drupal_array_merge_deep($view_mode_info, variable_get('entity_view_modes', array()));
+
+  // Because entity_get_info() merges in the default 'custom settings' value
+  // before it invokes hook_entity_info_alter(), we need to make sure that the
+  // custom view modes also have this value defined.
+  foreach ($view_mode_info as $entity_type => &$view_modes) {
+    foreach ($view_modes as &$view_mode) {
+      // @todo Should this default to TRUE?
+      $view_mode += array('custom settings' => FALSE);
+    }
+  }
+
+  // Add in the combined custom entity view modes which override the existing
+  // view modes in the entity information.
+  foreach ($view_mode_info as $entity_type => $view_modes) {
+    if (isset($info[$entity_type])) {
+      if (!isset($info[$entity_type]['view modes'])) {
+        $info[$entity_type]['view modes'] = array();
+      }
+      $info[$entity_type]['view modes'] = $info[$entity_type]['view modes'] + $view_modes;
     }
   }
 }

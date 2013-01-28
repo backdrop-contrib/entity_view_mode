@@ -155,6 +155,53 @@ class EntityViewModeFunctionalTest extends EntityViewModeTestHelper {
     $this->assertViewModeDefaultDisplay('node', 'article', 'custom_2');
     $this->assertViewModeDefaultDisplay('node', 'page', 'custom_2');
   }
+
+  /**
+   * Test the new entity view mode hooks.
+   */
+  public function testInfoHooks() {
+    variable_set('entity_view_modes', array(
+      'node' => array(
+        'info_3' => array(
+          'label' => t('Variable-altered view mode'),
+          'custom settings' => TRUE,
+        ),
+      ),
+      'taxonomy_term' => array(),
+    ));
+    $this->refreshVariables();
+
+    $info = entity_get_info();
+
+    // An invalid entity type in hook_entity_view_mode_info() does not pass
+    // into the entity info array.
+    $this->assertTrue(!isset($info['invalid-type']));
+
+    // Test hook-provided view modes.
+    $this->assertIdentical($info['node']['view modes']['info_1'], array(
+      'label' => t('Hook-defined view mode #1'),
+      'custom settings' => FALSE,
+    ));
+    $this->assertIdentical($info['node']['view modes']['info_2'], array(
+      'label' => t('Hook-altered view mode'),
+      'custom settings' => TRUE,
+    ));
+    $this->assertIdentical($info['node']['view modes']['info_3'], array(
+      'label' => t('Variable-altered view mode'),
+      'custom settings' => TRUE,
+    ));
+    $this->assertIdentical($info['taxonomy_term']['view modes']['info_1'], array(
+      'label' => t('Hook-defined view mode #1'),
+      'custom settings' => TRUE,
+    ));
+
+    // Test that entity view modes defined in hook_entity_info() are never
+    // overridden by custom view modes.
+    $this->assertIdentical($info['node']['view modes']['full'], array(
+      'label' => 'Full content',
+      'custom settings' => FALSE,
+    ));
+  }
 }
 
 class EntityViewModeSuggestionsTest extends EntityViewModeTestHelper {
