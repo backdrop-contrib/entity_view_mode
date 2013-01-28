@@ -274,7 +274,7 @@ function entity_view_mode_get_enabled_bundles($entity_type, $view_mode_name) {
   foreach ($entity_info['bundles'] as $bundle => $bundle_info) {
     $view_mode_settings = field_view_mode_settings($entity_type, $bundle);
     if (!empty($view_mode_settings[$view_mode_name]['custom_settings'])) {
-      $bundles[] = $bundle;
+      $bundles[$bundle] = $bundle_info['label'];
     }
   }
 
