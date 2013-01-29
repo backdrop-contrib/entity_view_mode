@@ -10,8 +10,10 @@ class EntityViewModeTestHelper extends DrupalWebTestCase {
   /**
    * Overrides DrupalWebTestCase::setUp().
    */
-  public function setUp() {
-    parent::setUp(array('entity_view_mode'));
+  public function setUp(array $modules = array()) {
+    $modules[] = 'entity_view_mode';
+    $modules[] = 'entity_view_mode_test';
+    parent::setUp($modules);
   }
 
   /**
@@ -58,6 +60,7 @@ class EntityViewModeTestHelper extends DrupalWebTestCase {
 }
 
 class EntityViewModeFunctionalTest extends EntityViewModeTestHelper {
+
   public static function getInfo() {
     return array(
       'name' => 'Entity view mode functionality',
@@ -66,8 +69,11 @@ class EntityViewModeFunctionalTest extends EntityViewModeTestHelper {
     );
   }
 
-  public function setUp() {
-    parent::setUp();
+  /**
+   * Overrides EntityViewModeTestHelper::setUp().
+   */
+  public function setUp(array $modules = array()) {
+    parent::setUp($modules);
 
     // Create an administrative user.
     $this->admin_user = $this->drupalCreateUser(array(
@@ -155,5 +161,84 @@ class EntityViewModeFunctionalTest extends EntityViewModeTestHelper {
     $this->assertNoViewModeExists('node', 'custom_2');
     $this->assertViewModeDefaultDisplay('node', 'article', 'custom_2');
     $this->assertViewModeDefaultDisplay('node', 'page', 'custom_2');
+  }
+}
+
+class EntityViewModeSuggestionsTest extends EntityViewModeTestHelper {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'View mode suggestions',
+      'description' => 'Tests entity view mode altering theme suggestions.',
+      'group' => 'Entity view mode',
+    );
+  }
+
+  /**
+   * Overrides EntityViewModeTestHelper::setUp().
+   */
+  public function setUp(array $modules = array()) {
+    parent::setUp($modules);
+
+    variable_set('entity_view_mode_theme_output_suggestions', array('comment', 'node', 'taxonomy_term', 'user_profile'));
+    drupal_static_reset('theme_get_registry');
+  }
+
+  public function testEntityTemplateSuggestions() {
+    $node = $this->drupalCreateNode();
+    $build = node_view($node);
+    $actual_suggestions = theme($build['#theme'], $build);
+    $expected_suggestions = array(
+      'node__' . $node->nid . '__full',
+      'node__' . $node->nid,
+      'node__' . $node->type . '__full',
+      'node__' . $node->type,
+    );
+    $this->assertIdentical($actual_suggestions, $expected_suggestions);
+
+    $comment = (object) array(
+      'cid' => NULL,
+      'nid' => $node->nid,
+      'pid' => 0,
+      'uid' => 0,
+      'status' => COMMENT_PUBLISHED,
+      'subject' => $this->randomName(),
+      'language' => LANGUAGE_NONE,
+      'comment_body' => array(LANGUAGE_NONE => array($this->randomName())),
+    );
+    comment_save($comment);
+    $build = comment_view($comment, $node, 'comment_test');
+    $actual_suggestions = theme($build['#theme'], $build);
+    $expected_suggestions = array(
+      'comment__' . $comment->cid . '__comment_test',
+      'comment__' . $comment->cid,
+      'comment__' . $node->type . '__comment_test',
+      'comment__' . $node->type,
+    );
+    $this->assertIdentical($actual_suggestions, $expected_suggestions);
+
+    $account = $this->admin_user;
+    $build = user_view($this->admin_user, 'user_test');
+    $actual_suggestions = theme($build['#theme'], $build);
+    $expected_suggestions = array(
+      'user__' . $account->uid . '__user_test',
+      'user__' . $account->uid,
+    );
+    $this->assertIdentical($actual_suggestions, $expected_suggestions);
+
+    $term = (object) array(
+      'name' => $this->randomName(),
+      'vocabulary_machine_name' => 'tags',
+    );
+    taxonomy_term_save($term);
+    $build = taxonomy_term_view($term, 'term_test');
+    $actual_suggestions = theme($build['#theme'], $build);
+    $expected_suggestions = array(
+      'taxonomy_term__' . $term->tid . '__term_test',
+      'taxonomy_term__' . $term->tid,
+      'taxonomy_term__' . $term->vocabulary_machine_name . '__term_test',
+      'taxonomy_term__' . $term->vocabulary_machine_name,
+    );
+    $this->assertIdentical($actual_suggestions, $expected_suggestions);
   }
 }

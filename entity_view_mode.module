@@ -271,6 +271,28 @@ function field_entity_view_mode_delete($view_mode, $entity_type) {
 }
 
 /**
+ * Implements hook_entity_view().
+ */
+function entity_view_mode_entity_view($entity, $entity_type, $view_mode, $langcode) {
+  // Add context and variables necessary to entity_view_mode_preprocess().
+  list($id, $vid, $bundle) = entity_extract_ids($entity_type, $entity);
+  $entity->content['#entity_view_mode'] = array(
+    'entity_type' => $entity_type,
+    'id' => $id,
+    'bundle' => $bundle,
+    'view_mode' => $view_mode,
+    'langcode' => $langcode,
+    'has_bundles' => TRUE,
+  );
+  if ($entity_type == $bundle) {
+    $info = entity_get_info($entity_type);
+    if (empty($info['entity keys']['bundle'])) {
+      $entity->content['#entity_view_mode']['has_bundles'] = FALSE;
+    }
+  }
+}
+
+/**
  * Implements hook_preprocess().
  *
  * Add template suggestions for an entity based on view modes if they do not
@@ -283,15 +305,14 @@ function field_entity_view_mode_delete($view_mode, $entity_type) {
  * - entity-type__id__view-mode (highest priority = last in the array)
  */
 function entity_view_mode_preprocess(&$variables, $hook) {
-  // @todo Improve checking of entity type based on hook. Some entities do not
-  // match 1:1 like file_entity and user_profile.
-  if (!empty($variables[$hook]) && !empty($variables['theme_hook_suggestions']) && entity_get_info($hook)) {
-    $view_mode = $variables['elements']['#view_mode'];
+  if (!empty($variables['elements']['#entity_view_mode'])) {
 
-    $entity_type = $hook;
-    $entity = $variables[$entity_type];
-    list($id, , $bundle) = entity_extract_ids($entity_type, $entity);
+    // Sometimes a rendered entity is passed into another theme function.
+    if ($variables['elements']['#theme'] != $hook) {
+      return;
+    }
 
+    extract($variables['elements']['#entity_view_mode']);
     $suggestions = &$variables['theme_hook_suggestions'];
 
     // Ensure the base suggestions exist and if not, add them.
