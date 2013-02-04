@@ -1,0 +1,4 @@
+name = Entity view mode test
+description = Testing module.
+core = 7.x
+hidden = TRUE
