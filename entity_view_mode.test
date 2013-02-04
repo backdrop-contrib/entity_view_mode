@@ -14,6 +14,12 @@ class EntityViewModeTestHelper extends DrupalWebTestCase {
     $modules[] = 'entity_view_mode';
     $modules[] = 'entity_view_mode_test';
     parent::setUp($modules);
+
+    // Create an administrative user.
+    $this->admin_user = $this->drupalCreateUser(array(
+      'administer entity view modes',
+      'administer content types',
+    ));
   }
 
   /**
@@ -67,19 +73,6 @@ class EntityViewModeFunctionalTest extends EntityViewModeTestHelper {
       'description' => 'Tests entity view mode module functionality.',
       'group' => 'Entity view mode',
     );
-  }
-
-  /**
-   * Overrides EntityViewModeTestHelper::setUp().
-   */
-  public function setUp(array $modules = array()) {
-    parent::setUp($modules);
-
-    // Create an administrative user.
-    $this->admin_user = $this->drupalCreateUser(array(
-      'administer entity view modes',
-      'administer content types',
-    ));
   }
 
   public function testEntityViewModes() {
