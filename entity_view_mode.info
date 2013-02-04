@@ -3,3 +3,4 @@ description = Allows administrators to define custom view modes for entities via
 core = 7.x
 recommends[] = field_ui
 configure = admin/config/system/entity-view-modes
+files[] = entity_view_mode.test
