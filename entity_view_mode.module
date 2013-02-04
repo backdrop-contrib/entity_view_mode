@@ -272,6 +272,8 @@ function field_entity_view_mode_delete($view_mode, $entity_type) {
 
 /**
  * Implements hook_entity_view().
+ *
+ * @see entity_view_mode_preprocess()
  */
 function entity_view_mode_entity_view($entity, $entity_type, $view_mode, $langcode) {
   // Add context and variables necessary to entity_view_mode_preprocess().
@@ -303,12 +305,18 @@ function entity_view_mode_entity_view($entity, $entity_type, $view_mode, $langco
  * - entity-type__bundle__view-mode
  * - entity-type__id
  * - entity-type__id__view-mode (highest priority = last in the array)
+ *
+ * @see entity_view_mode_entity_view()
  */
 function entity_view_mode_preprocess(&$variables, $hook) {
+  // Check for the context provided in entity_view_mode_entity_view().
   if (!empty($variables['elements']['#entity_view_mode'])) {
 
-    // Sometimes a rendered entity is passed into another theme function.
-    if ($variables['elements']['#theme'] != $hook) {
+    // Sometimes a rendered entity is passed into another theme function, in
+    // which case we should not process. But also account that #theme may be a
+    // hook suggestion itself. For example. #theme = 'comment__node_type'
+    // and $hook = 'comment'.
+    if ($variables['elements']['#theme'] != $hook && strpos($variables['elements']['#theme'], $hook . '__') !== 0) {
       return;
     }
 
@@ -316,7 +324,7 @@ function entity_view_mode_preprocess(&$variables, $hook) {
     $suggestions = &$variables['theme_hook_suggestions'];
 
     // Ensure the base suggestions exist and if not, add them.
-    if (!in_array("{$entity_type}__{$bundle}", $suggestions)) {
+    if ($has_bundles && !in_array("{$entity_type}__{$bundle}", $suggestions)) {
       // The entity-type__bundle suggestion is typically "first".
       array_unshift($suggestions, "{$entity_type}__{$bundle}");
     }
@@ -326,7 +334,7 @@ function entity_view_mode_preprocess(&$variables, $hook) {
     }
 
     // Add view mode suggestions based on the location of the base suggestions.
-    if (!in_array("{$entity_type}__{$bundle}__{$view_mode}", $suggestions)) {
+    if ($has_bundles && !in_array("{$entity_type}__{$bundle}__{$view_mode}", $suggestions)) {
       $index = array_search("{$entity_type}__{$bundle}", $suggestions);
       array_splice($suggestions, $index + 1, 0, "{$entity_type}__{$bundle}__{$view_mode}");
     }

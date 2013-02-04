@@ -180,22 +180,26 @@ class EntityViewModeSuggestionsTest extends EntityViewModeTestHelper {
   public function setUp(array $modules = array()) {
     parent::setUp($modules);
 
+    // Core RDF module causes PHP notices with entity rendering.
+    module_disable(array('rdf'));
+
     variable_set('entity_view_mode_theme_output_suggestions', array('comment', 'node', 'taxonomy_term', 'user_profile'));
     drupal_static_reset('theme_get_registry');
   }
 
   public function testEntityTemplateSuggestions() {
     $node = $this->drupalCreateNode();
-    $build = node_view($node);
+    $build = node_view($node, 'node_test');
     $actual_suggestions = theme($build['#theme'], $build);
     $expected_suggestions = array(
-      'node__' . $node->nid . '__full',
+      'node__' . $node->nid . '__node_test',
       'node__' . $node->nid,
-      'node__' . $node->type . '__full',
+      'node__' . $node->type . '__node_test',
       'node__' . $node->type,
     );
     $this->assertIdentical($actual_suggestions, $expected_suggestions);
 
+    // Rendering comments uses '#theme' => 'comment__node_type'.
     $comment = (object) array(
       'cid' => NULL,
       'nid' => $node->nid,
@@ -212,11 +216,12 @@ class EntityViewModeSuggestionsTest extends EntityViewModeTestHelper {
     $expected_suggestions = array(
       'comment__' . $comment->cid . '__comment_test',
       'comment__' . $comment->cid,
-      'comment__' . $node->type . '__comment_test',
-      'comment__' . $node->type,
+      'comment__' . 'comment_node_' . $node->type . '__comment_test',
+      'comment__' . 'comment_node_' . $node->type,
     );
     $this->assertIdentical($actual_suggestions, $expected_suggestions);
 
+    // Users have no bundles.
     $account = $this->admin_user;
     $build = user_view($this->admin_user, 'user_test');
     $actual_suggestions = theme($build['#theme'], $build);
@@ -238,6 +243,30 @@ class EntityViewModeSuggestionsTest extends EntityViewModeTestHelper {
       'taxonomy_term__' . $term->tid,
       'taxonomy_term__' . $term->vocabulary_machine_name . '__term_test',
       'taxonomy_term__' . $term->vocabulary_machine_name,
+    );
+    $this->assertIdentical($actual_suggestions, $expected_suggestions);
+
+    // Test the proper ordering of suggestions using the custom testing
+    // theme function.
+    $build = array(
+      '#theme' => 'entity_view_mode_test',
+      '#entity_view_mode' => array(
+        'entity_type' => 'test',
+        'id' => 'id',
+        'bundle' => 'bundle',
+        'view_mode' => 'view_mode',
+        'langcode' => 'xx-test',
+        'has_bundles' => TRUE,
+      ),
+    );
+    $actual_suggestions = theme($build['#theme'], $build);
+    $expected_suggestions = array(
+      'test__first',
+      'test__id__view_mode',
+      'test__id',
+      'test__bundle__view_mode',
+      'test__bundle',
+      'test__last',
     );
     $this->assertIdentical($actual_suggestions, $expected_suggestions);
   }
