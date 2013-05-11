@@ -52,10 +52,10 @@ function entity_view_mode_entity_info_alter(&$info) {
   // Because entity_get_info() merges in the default 'custom settings' value
   // before it invokes hook_entity_info_alter(), we need to make sure that the
   // custom view modes also have this value defined.
-  foreach ($view_mode_info as $entity_type => &$view_modes) {
-    foreach ($view_modes as &$view_mode) {
+  foreach ($view_mode_info as $entity_type => $view_modes) {
+    foreach (array_keys($view_modes) as $view_mode) {
       // @todo Should this default to TRUE?
-      $view_mode += array('custom settings' => FALSE);
+      $view_mode_info[$entity_type][$view_mode] += array('custom settings' => FALSE);
     }
   }
 
