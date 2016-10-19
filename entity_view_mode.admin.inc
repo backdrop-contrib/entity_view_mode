@@ -37,7 +37,7 @@ function entity_view_mode_list() {
     $rows = array();
     foreach ($entity_info[$entity_type]['view modes'] as $view_mode => $view_mode_info) {
       $rows[$view_mode]['label'] = check_plain($view_mode_info['label']);
-      $rows[$view_mode]['type'] = !empty($custom_view_modes[$entity_type][$view_mode]) ? t('In database') : t('In code');
+      $rows[$view_mode]['type'] = !empty($custom_view_modes[$entity_type][$view_mode]) ? t('In configuration') : t('In code');
       $rows[$view_mode]['custom_settings'] = !empty($view_mode_info['custom settings']) ? t('Yes') : t('No');
 
       $operations = array();

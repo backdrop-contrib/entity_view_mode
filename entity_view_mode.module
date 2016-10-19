@@ -108,10 +108,33 @@ function entity_view_mode_menu() {
 }
 
 /**
- * Implements hook_menu_local_tasks_alter() {
+ * Implements hook_menu_local_tasks_alter().
  */
-//function entity_view_mode_local_tasks_alter(&$data, $router_item, $root_path) {
-//}
+function entity_view_mode_menu_local_tasks_alter(&$data, $router_item, $root_path) {
+  // Hard code the paths to core field UI display pages, since programmatic
+  // detection is hard.
+  $core_display_paths = array(
+    'admin/config/people/manage/display',
+    'admin/structure/types/manage/%/display',
+    'admin/structure/types/manage/%/comment/display',
+    'admin/structure/taxonomy/%/display',
+  );
+  $display = FALSE;
+  foreach ($core_display_paths as $path) {
+    if (strpos($root_path, $path) !== FALSE) {
+      $display = TRUE;
+    }
+  }
+  if ($display) {
+    $item = menu_get_item('admin/config/system/entity-view-modes');
+    if ($item['access']) {
+      $data['actions']['output'][] = array(
+        '#theme' => 'menu_local_action',
+        '#link' => $item,
+      );
+    }
+  }
+}
 
 /**
  * Implements hook_form_FORM_ID_alter().
