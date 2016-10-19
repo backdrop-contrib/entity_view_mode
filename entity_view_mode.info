@@ -3,3 +3,4 @@ description = Allows administrators to define custom view modes for entities via
 backdrop = 1.x
 recommends[] = field_ui
 configure = admin/config/system/entity-view-modes
+type = module
