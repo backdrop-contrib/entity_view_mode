@@ -43,11 +43,11 @@ function entity_view_mode_entity_info_alter(&$info) {
   // First get all the hook-provided view modes.
   $invoking_hooks = TRUE;
   $view_mode_info = module_invoke_all('entity_view_mode_info');
-  drupal_alter('entity_view_mode_info', $view_mode_info);
+  backdrop_alter('entity_view_mode_info', $view_mode_info);
   $invoking_hooks = FALSE;
 
   // Add in the variable entity view modes which override hook-provided.
-  $view_mode_info = drupal_array_merge_deep($view_mode_info, variable_get('entity_view_modes', array()));
+  $view_mode_info = backdrop_array_merge_deep($view_mode_info, config_get('entity_view_mode.settings', 'entity_view_modes'));
 
   // Because entity_get_info() merges in the default 'custom settings' value
   // before it invokes hook_entity_info_alter(), we need to make sure that the
@@ -84,21 +84,21 @@ function entity_view_mode_menu() {
   );
   $items['admin/config/system/entity-view-modes/add/%'] = array(
     'title' => 'Add view mode',
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('entity_view_mode_edit_form', 5),
     'access arguments' => array('administer entity view modes'),
     'file' => 'entity_view_mode.admin.inc',
   );
   $items['admin/config/system/entity-view-modes/edit/%/%'] = array(
     'title' => 'Edit view mode',
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('entity_view_mode_edit_form', 5, 6),
     'access arguments' => array('administer entity view modes'),
     'file' => 'entity_view_mode.admin.inc',
   );
   $items['admin/config/system/entity-view-modes/delete/%/%'] = array(
     'title' => 'Edit view mode',
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('entity_view_mode_delete_form', 5, 6),
     'access arguments' => array('administer entity view modes'),
     'file' => 'entity_view_mode.admin.inc',
@@ -123,7 +123,7 @@ function entity_view_mode_menu() {
  * Load a custom entity view mode by entity type and machine name.
  */
 function entity_view_mode_load($entity_type, $machine_name) {
-  $view_modes = variable_get('entity_view_modes', array());
+  $view_modes = config_get('entity_view_mode.settings', 'entity_view_modes');
 
   if (!empty($view_modes[$entity_type][$machine_name])) {
     // Ensure that the machine name is always available.
@@ -162,11 +162,11 @@ function entity_view_mode_save($entity_type, $view_mode) {
   module_invoke_all('entity_view_mode_presave', $view_mode, $entity_type);
 
   // Save the view mode.
-  $view_modes = variable_get('entity_view_modes', array());
+  $view_modes = config_get('entity_view_mode.settings', 'entity_view_modes');
   unset($view_modes[$entity_type][$existing_view_mode]);
-  $view_modes[$entity_type][$view_mode_name] = array_intersect_key($view_mode, drupal_map_assoc(array('label', 'custom settings')));
+  $view_modes[$entity_type][$view_mode_name] = array_intersect_key($view_mode, backdrop_map_assoc(array('label', 'custom settings')));
   $view_modes[$entity_type][$view_mode_name] += array('custom settings' => TRUE);
-  variable_set('entity_view_modes', $view_modes);
+  config_set('entity_view_mode.settings', 'entity_view_modes', $view_modes);
 
   // Allow modules to respond after the view mode is saved.
   if ($view_mode['is_new']) {
@@ -187,7 +187,7 @@ function entity_view_mode_save($entity_type, $view_mode) {
 
   // Clear the static entity info cache and rebuild the menu.
   entity_info_cache_clear();
-  variable_set('menu_rebuild_needed', TRUE);
+  state_set('menu_rebuild_needed', TRUE);
 }
 
 /**
@@ -197,13 +197,13 @@ function entity_view_mode_delete($entity_type, $machine_name) {
   if ($view_mode = entity_view_mode_load($entity_type, $machine_name)) {
     module_invoke_all('entity_view_mode_delete', $view_mode, $entity_type);
 
-    $view_modes = variable_get('entity_view_modes', array());
+    $view_modes = config_get('entity_view_mode.settings', 'entity_view_modes');
     unset($view_modes[$entity_type][$machine_name]);
-    variable_set('entity_view_modes', $view_modes);
+    config_set('entity_view_mode.settings', 'entity_view_modes', $view_modes);
 
     // Clear the static entity info cache and rebuild the menu.
     entity_info_cache_clear();
-    variable_set('menu_rebuild_needed', TRUE);
+    state_set('menu_rebuild_needed', TRUE);
   }
 }
 
@@ -273,11 +273,11 @@ function field_entity_view_mode_update($view_mode, $entity_type) {
       $view_mode_settings = field_view_mode_settings($entity_type, $bundle);
       if (!empty($value) && empty($view_mode_settings[$view_mode_name]['custom_settings'])) {
         $path = _field_ui_bundle_admin_path($entity_type, $bundle) . "/display/$view_mode_name";
-        drupal_set_message(t('The %view_mode @entity_type @bundle view mode now uses custom display settings copied from the default view mode. You might want to <a href="@url">configure them</a>.', array(
+        backdrop_set_message(t('The %view_mode @entity_type @bundle view mode now uses custom display settings copied from the default view mode. You might want to <a href="@url">configure them</a>.', array(
           '%view_mode' => $view_mode['label'],
           '@entity_type' => $entity_info['label'],
           '@bundle' => $entity_info['bundles'][$bundle]['label'],
-          '@url' => url($path, array('query' => drupal_get_destination())),
+          '@url' => url($path, array('query' => backdrop_get_destination())),
         )));
         // Initialize the newly customized view mode with the display settings
         // from the default view mode.
@@ -417,4 +417,15 @@ function entity_view_mode_get_possible_bundles($entity_type) {
   }
 
   return $bundles;
+}
+
+/**
+ * Implements hook_config_info().
+ */
+function entity_view_mode_config_info() {
+  $prefixes['entity_view_mode.settings'] = array(
+    'label' => t('Entity view mode settings'),
+    'group' => t('Entity view mode'),
+  );
+  return $prefixes;
 }

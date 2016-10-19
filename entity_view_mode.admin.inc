@@ -4,7 +4,7 @@
  * List all custom view modes.
  */
 function entity_view_mode_list() {
-  $custom_view_modes = variable_get('entity_view_modes', array());
+  $custom_view_modes = config_get('entity_view_mode.settings', 'entity_view_modes');
   $entity_info = entity_get_info();
 
   $build = array(
@@ -15,7 +15,7 @@ function entity_view_mode_list() {
         //array('system', 'ui.accordion'),
       ),
       'js' => array(
-        //drupal_get_path('module', 'entity_view_mode') . '/entity_view_mode.admin.js',
+        //backdrop_get_path('module', 'entity_view_mode') . '/entity_view_mode.admin.js',
       ),
     ),
   );
@@ -94,8 +94,8 @@ function entity_view_mode_edit_form($form, &$form_state, $entity_type, $machine_
   $view_mode = entity_view_mode_load($entity_type, $machine_name);
 
   if (empty($entity_info['view modes']) || (isset($machine_name) && empty($view_mode))) {
-    drupal_not_found();
-    drupal_exit();
+    backdrop_not_found();
+    backdrop_exit();
   }
 
   $form['entity_type'] = array(
@@ -171,8 +171,8 @@ function entity_view_mode_edit_form_submit($form, &$form_state) {
   $view_mode = $form_state['values'];
   entity_view_mode_save($form['#entity_type'], $view_mode);
 
-  drupal_set_message(t('Saved the %view-mode @entity-type view mode.', array(
-    '@entity-type' => drupal_strtolower($form['#entity_info']['label']),
+  backdrop_set_message(t('Saved the %view-mode @entity-type view mode.', array(
+    '@entity-type' => backdrop_strtolower($form['#entity_info']['label']),
     '%view-mode' => $view_mode['label'],
   )));
   $form_state['redirect'] = 'admin/config/system/entity-view-modes';
@@ -184,8 +184,8 @@ function entity_view_mode_delete_form(array $form, $form_state, $entity_type, $m
   $form['#view_mode'] = $view_mode = entity_view_mode_load($entity_type, $machine_name);
 
   if (empty($form['#view_mode'])) {
-    drupal_not_found();
-    drupal_exit();
+    backdrop_not_found();
+    backdrop_exit();
   }
 
   $form['machine_name'] = array(
@@ -196,7 +196,7 @@ function entity_view_mode_delete_form(array $form, $form_state, $entity_type, $m
   return confirm_form(
     $form,
     t('Are you sure you want to delete the %view-mode @entity-type view mode?', array(
-      '@entity-type' => drupal_strtolower($entity_info['label']),
+      '@entity-type' => backdrop_strtolower($entity_info['label']),
       '%view-mode' => $view_mode['label'],
     )),
     'admin/config/system/entity-view-modes',
@@ -209,8 +209,8 @@ function entity_view_mode_delete_form(array $form, $form_state, $entity_type, $m
 function entity_view_mode_delete_form_submit($form, &$form_state) {
   entity_view_mode_delete($form['#entity_type'], $form_state['values']['machine_name']);
 
-  drupal_set_message(t('Deleted the %view-mode @entity-type view mode.', array(
-    '@entity-type' => drupal_strtolower($form['#entity_info']['label']),
+  backdrop_set_message(t('Deleted the %view-mode @entity-type view mode.', array(
+    '@entity-type' => backdrop_strtolower($form['#entity_info']['label']),
     '%view-mode' => $form['#view_mode']['label'],
   )));
   $form_state['redirect'] = 'admin/config/system/entity-view-modes';
